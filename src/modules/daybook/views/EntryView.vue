@@ -70,122 +70,122 @@ import uploadImage from '../helpers/uploadImage';
 import getDayMonthYear from '../helpers/getDayMonthYear';
 
 export default {
-props:{
-    id: {
-        type: String,
-        required: true
-    }
-},
-components: {
-    Fab: defineAsyncComponent(() => import('../components/Fab.vue'))
-},
-data(){
-    return {
-        entry: {},
-        localImage: null,
-        imgFile: null
-    }
-},
-computed: {
-    ...mapGetters('journal',['getEntryById']),
-    day(){
-        const { day } = getDayMonthYear( this.entry.date )
-        return day
+    name: 'EntryView',
+    props:{
+        id: {
+            type: String,
+            required: true
+        }
     },
-    month(){
-        const { month } = getDayMonthYear( this.entry.date )
-        return month
+    components: {
+        Fab: defineAsyncComponent(() => import('../components/Fab.vue'))
     },
-    yearDate(){
-        const { yearDate } = getDayMonthYear( this.entry.date )
-        return yearDate
-    }
-},
-methods: {
-    ...mapActions('journal', ['updateEntries', 'createEntry', 'deleteEntry']),
-    loadEntry () {
-        let entry;
-        if (this.id === 'new') {
-            entry = {
-                text: '',
-                date: new Date().getTime()
+    data(){
+        return {
+            entry: {},
+            localImage: null,
+            imgFile: null
+        }
+    },
+    computed: {
+        ...mapGetters('journal',['getEntryById']),
+        day(){
+            const { day } = getDayMonthYear( this.entry.date )
+            return day
+        },
+        month(){
+            const { month } = getDayMonthYear( this.entry.date )
+            return month
+        },
+        yearDate(){
+            const { yearDate } = getDayMonthYear( this.entry.date )
+            return yearDate
+        }
+    },
+    methods: {
+        ...mapActions('journal', ['updateEntries', 'createEntry', 'deleteEntry']),
+        loadEntry () {
+            let entry;
+            if (this.id === 'new') {
+                entry = {
+                    text: '',
+                    date: new Date().getTime()
+                }
+            } else {
+                entry = this.getEntryById(this.id)
+                if ( !entry ) return this.$router.push({name: 'no-entry'})
             }
-        } else {
-            entry = this.getEntryById(this.id)
-            if ( !entry ) return this.$router.push({name: 'no-entry'})
-        }
-        this.entry = entry
-    },
-    async onSaveEntry(){
+            this.entry = entry
+        },
+        async onSaveEntry(){
 
-        new Swal({
-            title: 'Espere por favor',
-            allowOutsideClick: false,
-        })
-        Swal.showLoading()
-
-        const picture = await uploadImage(this.imgFile)
-
-        this.entry.picture = picture
-
-        if ( this.entry.id ) {
-            // Actualizar
-            await this.updateEntries(this.entry)
-        } else {
-            // Crear una nueva entrada
-            const id = await this.createEntry(this.entry)
-            this.$router.push({name: 'entry', params: {id}})
-        }
-        this.imgFile = null
-        Swal.fire('Guardado', 'Entrada registrada con éxito', 'success')
-
-    },
-    async onDeleteEntry(){
-        const { isConfirmed } = await Swal.fire({
-            title: '¿Estás seguro?',
-            text: 'Una vez borrado, no se podrá recuperar.',
-            showDenyButton: true,
-            confirmButtonText: 'Si, estoy seguro'
-        })
-
-        if (isConfirmed) {
             new Swal({
                 title: 'Espere por favor',
-                allowOutsideClick: false
+                allowOutsideClick: false,
             })
             Swal.showLoading()
-            await this.deleteEntry(this.entry.id)
-            this.$router.push({name: 'no-entry'})
 
-            Swal.fire('Eliminado', '', 'success')
-        }
-    },
-    onSelectedImage({target}){
-        const file = target.files[0]
-        if (!file) {
-            this.localImage = null
+            const picture = await uploadImage(this.imgFile)
+
+            this.entry.picture = picture
+
+            if ( this.entry.id ) {
+                // Actualizar
+                await this.updateEntries(this.entry)
+            } else {
+                // Crear una nueva entrada
+                const id = await this.createEntry(this.entry)
+                this.$router.push({name: 'entry', params: {id}})
+            }
             this.imgFile = null
-            return
-        }
-        // imgFile para enviar
-        this.imgFile = file
-        const fr = new FileReader()
-        fr.onload = () => this.localImage = fr.result
-        fr.readAsDataURL( file )
-    },
-    onSelectImage(){
-        this.$refs.imageSelector.click()
-    }
-},
-created(){
-    this.loadEntry()
-},
-watch: {
-    id(){
-        this.loadEntry()
-    }
-}
+            Swal.fire('Guardado', 'Entrada registrada con éxito', 'success')
 
+        },
+        async onDeleteEntry(){
+            const { isConfirmed } = await Swal.fire({
+                title: '¿Estás seguro?',
+                text: 'Una vez borrado, no se podrá recuperar.',
+                showDenyButton: true,
+                confirmButtonText: 'Si, estoy seguro'
+            })
+
+            if (isConfirmed) {
+                Swal.fire({
+                    title: 'Espere por favor',
+                    allowOutsideClick: false
+                })
+                Swal.showLoading()
+                await this.deleteEntry(this.entry.id)
+                this.$router.push({name: 'no-entry'})
+
+                Swal.fire('Eliminado', '', 'success')
+            }
+        },
+        onSelectedImage({target}){
+            const file = target.files[0]
+            if (!file) {
+                this.localImage = null
+                this.imgFile = null
+                return
+            }
+            // imgFile para enviar
+            this.imgFile = file
+            const fr = new FileReader()
+            fr.onload = () => this.localImage = fr.result
+            fr.readAsDataURL( file )
+        },
+        onSelectImage(){
+            this.$refs.imageSelector.click()
+        }
+    },
+    created(){
+        this.loadEntry()
+    },
+    watch: {
+        id(){
+            this.loadEntry()
+        }
+    }
 }
 </script>
 
